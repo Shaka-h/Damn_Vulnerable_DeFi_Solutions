@@ -43,8 +43,8 @@ contract UnstoppableVault is IERC3156FlashLender, ReentrancyGuard, Owned, ERC462
      * @inheritdoc IERC3156FlashLender
      */
     function maxFlashLoan(address _token) public view nonReadReentrant returns (uint256) {
-        if (address(asset) != _token) {
-            return 0;
+        if (address(asset) != _token) { //@audit where is this asset coming from ?
+            return 0; //@audit why not revert UnsupportedCurrency();
         }
 
         return totalAssets();
@@ -58,7 +58,7 @@ contract UnstoppableVault is IERC3156FlashLender, ReentrancyGuard, Owned, ERC462
             revert UnsupportedCurrency();
         }
 
-        if (block.timestamp < end && _amount < maxFlashLoan(_token)) {
+        if (block.timestamp < end && _amount < maxFlashLoan(_token)) { //@audit vice versa?
             return 0;
         } else {
             return _amount.mulWadUp(FEE_FACTOR);
@@ -114,7 +114,7 @@ contract UnstoppableVault is IERC3156FlashLender, ReentrancyGuard, Owned, ERC462
     function afterDeposit(uint256 assets, uint256 shares) internal override nonReentrant whenNotPaused {}
 
     function setFeeRecipient(address _feeRecipient) external onlyOwner {
-        if (_feeRecipient != address(this)) {
+        if (_feeRecipient != address(this)) { //@audit only this vault can receive tokens
             feeRecipient = _feeRecipient;
             emit FeeRecipientUpdated(_feeRecipient);
         }
