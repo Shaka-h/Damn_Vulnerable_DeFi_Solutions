@@ -46,6 +46,7 @@ contract SideEntranceChallenge is Test {
      */
     function test_sideEntrance() public checkSolvedByPlayer {
         Attacker attacker = new Attacker(pool, recovery, ETHER_IN_POOL);
+        attacker.attack();
     }
 
     /**
