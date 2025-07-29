@@ -13,7 +13,7 @@ contract SimpleGovernance is ISimpleGovernance {
 
     DamnValuableVotes private _votingToken;
     uint256 private _actionCounter;
-    mapping(uint256 => GovernanceAction) private _actions;
+    mapping(uint256 => GovernanceAction) public _actions;
 
     constructor(DamnValuableVotes votingToken) {
         _votingToken = votingToken;
@@ -93,7 +93,7 @@ contract SimpleGovernance is ISimpleGovernance {
         unchecked {
             timeDelta = uint64(block.timestamp) - actionToExecute.proposedAt;
         }
-
+        //false && false
         return actionToExecute.executedAt == 0 && timeDelta >= ACTION_DELAY_IN_SECONDS;
     }
 
@@ -103,3 +103,4 @@ contract SimpleGovernance is ISimpleGovernance {
         return balance > halfTotalSupply;
     }
 }
+

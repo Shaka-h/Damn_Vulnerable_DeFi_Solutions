@@ -52,10 +52,10 @@ contract TheRewarderDistributor {
         return distributions[IERC20(token)].roots[batchNumber];
     }
 
-    function createDistribution(IERC20 token, bytes32 newRoot, uint256 amount) external {
+    function createDistribution(IERC20 token, bytes32 newRoot, uint256 amount) external { // Creates a new Merkle root for a given token and batch.
         if (amount == 0) revert NotEnoughTokensToDistribute();
         if (newRoot == bytes32(0)) revert InvalidRoot();
-        if (distributions[token].remaining != 0) revert StillDistributing();
+        if (distributions[token].remaining != 0) revert StillDistributing(); // remaining can not be zero
 
         distributions[token].remaining = amount;
 
@@ -71,8 +71,8 @@ contract TheRewarderDistributor {
     function clean(IERC20[] calldata tokens) external {
         for (uint256 i = 0; i < tokens.length; i++) {
             IERC20 token = tokens[i];
-            if (distributions[token].remaining == 0) {
-                token.transfer(owner, token.balanceOf(address(this)));
+            if (distributions[token].remaining == 0) { // if nothing is remaining , how does it happen ?
+                token.transfer(owner, token.balanceOf(address(this))); // send everything to the owner
             }
         }
     }
@@ -90,15 +90,15 @@ contract TheRewarderDistributor {
             uint256 wordPosition = inputClaim.batchNumber / 256;
             uint256 bitPosition = inputClaim.batchNumber % 256;
 
-            if (token != inputTokens[inputClaim.tokenIndex]) {
-                if (address(token) != address(0)) {
+            if (token != inputTokens[inputClaim.tokenIndex]) { // at non zero index this will not work
+                if (address(token) != address(0)) { // at index 0 we dont enter (address(0) != address(0))
                     if (!_setClaimed(token, amount, wordPosition, bitsSet)) revert AlreadyClaimed();
                 }
 
                 token = inputTokens[inputClaim.tokenIndex];
                 bitsSet = 1 << bitPosition; // set bit at given position
                 amount = inputClaim.amount;
-            } else {
+            } else { // at non zero index this will not work
                 bitsSet = bitsSet | 1 << bitPosition;
                 amount += inputClaim.amount;
             }
@@ -113,7 +113,7 @@ contract TheRewarderDistributor {
 
             if (!MerkleProof.verify(inputClaim.proof, root, leaf)) revert InvalidProof();
 
-            inputTokens[inputClaim.tokenIndex].transfer(msg.sender, inputClaim.amount);
+            inputTokens[inputClaim.tokenIndex].transfer(msg.sender, inputClaim.amount); // now we set the token
         }
     }
 
