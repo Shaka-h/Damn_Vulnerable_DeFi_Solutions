@@ -33,7 +33,7 @@ contract Exchange is ReentrancyGuard {
         }
 
         // Price should be in [wei / NFT]
-        uint256 price = oracle.getMedianPrice(token.symbol());
+        uint256 price = oracle.getMedianPrice(token.symbol()); /// can i get wrong price?
         if (msg.value < price) {
             revert InvalidPayment();
         }
@@ -46,7 +46,7 @@ contract Exchange is ReentrancyGuard {
         emit TokenBought(msg.sender, id, price);
     }
 
-    function sellOne(uint256 id) external nonReentrant {
+    function sellOne(uint256 id) external nonReentrant { // from seller to this contract
         if (msg.sender != token.ownerOf(id)) {
             revert SellerNotOwner(id);
         }
@@ -56,7 +56,7 @@ contract Exchange is ReentrancyGuard {
         }
 
         // Price should be in [wei / NFT]
-        uint256 price = oracle.getMedianPrice(token.symbol());
+        uint256 price = oracle.getMedianPrice(token.symbol()); // can i sell at a maximum help amount on this contract
         if (address(this).balance < price) {
             revert NotEnoughFunds();
         }
@@ -71,3 +71,6 @@ contract Exchange is ReentrancyGuard {
 
     receive() external payable {}
 }
+
+
+
