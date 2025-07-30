@@ -29,4 +29,5 @@ SOLUTION
 //Private 0x68bd020ad186b647a691c6a5c0c1529f21ecd09dcc45241402ac60ba377c4159
 // Public 0xA417D473c40a4d42BAd35f147c21eEa7973539D8 --- Trusted source[2]
 
+with this information, it is possible to sign transactions as a trusted source
 ```

